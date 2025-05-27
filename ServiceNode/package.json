@@ -1,0 +1,19 @@
+{
+  "name": "print-service-node",
+  "version": "1.0.0",
+  "description": "Servicio local para impresión PostScript en puerto COM",
+  "main": "server.js",
+  "bin": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "pkg": {
+    "targets": ["node18-win-x64"]
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "serialport": "^11.0.0",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5"
+  }
+}

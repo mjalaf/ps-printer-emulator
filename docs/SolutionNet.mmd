@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant Browser
+    participant NodeService
+    participant Impresora
+
+    Browser->>NodeService: POST /print (contenido PostScript)
+    NodeService->>Impresora: Enviar datos al puerto COM3
+    Impresora-->>NodeService: Confirmación (opcional)
+    NodeService-->>Browser: Respuesta HTTP (OK / Error)
