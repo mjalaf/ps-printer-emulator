@@ -3,11 +3,11 @@
 Este proyecto permite exponer una API local para enviar datos en formato PostScript a una impresora conectada al puerto COM (como COM3 o COM4), desde una aplicación web (por ejemplo, Angular).
 
 Incluye dos implementaciones:
-- **Node.js**
-- **.NET 6 (WebAPI)**
+- **Node.js** (`print-service-node`)
+- **.NET 6 (WebAPI)** (`print-service-dotnet`)
 
 También incluye:
-- Emulador de impresora en Python (para pruebas sin hardware)
+- **Emulador de impresora en Python** (`postscript_com3_emulator_by_job.py`) para pruebas sin hardware real
 - Scripts para instalación del servicio como servicio de Windows usando NSSM
 - Script Inno Setup para generar instalador `.exe`
 
@@ -16,9 +16,9 @@ También incluye:
 ## 📦 Estructura del Proyecto
 
 ```
-print-service-node/       --> Servicio en Node.js
-print-service-dotnet/     --> Servicio en .NET
-emulador/                 --> Emulador de impresora en Python
+print-service-node/       --> Servicio local Node.js
+print-service-dotnet/     --> Servicio local .NET 6 WebAPI
+postscript_com4_emulator_by_job.py  --> Emulador de impresora en COM4
 ```
 
 ---
@@ -72,43 +72,47 @@ install_service.bat
 
 ## 🖨️ Emulador de Impresora (Python)
 
+Archivo: `postscript_com4_emulator_by_job.py`
+
+Este script simula una impresora escuchando en el puerto COM4. Cada vez que recibe una impresión (detecta salto de línea o `\x0C`), guarda el contenido recibido en un archivo `.txt` dentro de la carpeta `impresiones`.
+
+### Uso:
+
 ```bash
 pip install pyserial
 python postscript_com4_emulator_by_job.py
 ```
 
-Escucha en COM4 y genera un `.txt` por impresión recibida.
-
 ---
 
 ## 🧪 Diagramas de Secuencia
 
-### Node.js
+### Node.js (`print-service-node/server.js`)
 
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant NodeService
-    participant Impresora
+    participant server.js
+    participant COM3
 
-    Browser->>NodeService: POST /print (contenido PostScript)
-    NodeService->>Impresora: Enviar datos al puerto COM3
-    Impresora-->>NodeService: Confirmación (opcional)
-    NodeService-->>Browser: Respuesta HTTP (OK / Error)
+    Browser->>server.js: POST /print (contenido PostScript)
+    server.js->>COM3: Enviar datos al puerto
+    COM3-->>server.js: Confirmación (opcional)
+    server.js-->>Browser: Respuesta HTTP (OK / Error)
 ```
 
-### .NET
+### .NET (`print-service-dotnet/Controllers/PrintController.cs`)
 
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant DotNetService
-    participant Impresora
+    participant PrintController.cs
+    participant COM3
 
-    Browser->>DotNetService: POST /api/print (contenido PostScript)
-    DotNetService->>Impresora: Escribir en COM3 vía SerialPort
-    Impresora-->>DotNetService: Confirmación (opcional)
-    DotNetService-->>Browser: Respuesta HTTP (OK / Error)
+    Browser->>PrintController.cs: POST /api/print (contenido PostScript)
+    PrintController.cs->>COM3: Escribir en puerto serie
+    COM3-->>PrintController.cs: Confirmación (opcional)
+    PrintController.cs-->>Browser: Respuesta HTTP (OK / Error)
 ```
 
 ---
