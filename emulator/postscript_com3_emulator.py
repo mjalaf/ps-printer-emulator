@@ -2,7 +2,7 @@ import serial
 import os
 import datetime
 
-PORT = 'COM3'  # Puerto virtual de lectura
+PORT = 'COM6'  # <-- Emulador escucha aquí (conectado virtualmente a COM5)
 BAUD_RATE = 9600
 OUTPUT_DIR = 'impresiones'
 
@@ -12,7 +12,7 @@ def ensure_output_dir():
 
 def generate_filename():
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    return os.path.join(OUTPUT_DIR, f"impresion_{timestamp}.txt")
+    return os.path.join(OUTPUT_DIR, f"impresion_{timestamp}.ps")
 
 def main():
     ensure_output_dir()
@@ -21,12 +21,13 @@ def main():
             print(f"Escuchando en {PORT}... (presiona Ctrl+C para salir)")
             buffer = ""
             while True:
-                if ser.in_waiting:
-                    data = ser.read(ser.in_waiting).decode('utf-8', errors='replace')
+                data = ser.read(1024).decode("utf-8", errors="replace")
+                if data:
+                    print(f"Recibido: {data}")
                     buffer += data
-                    if "\n" in buffer or "\x0C" in buffer:  # newline o form feed = fin de trabajo
+                    if "showpage" in buffer:
                         filename = generate_filename()
-                        with open(filename, 'w', encoding='utf-8') as f:
+                        with open(filename, "w", encoding="utf-8") as f:
                             f.write(buffer)
                         print(f"Guardado: {filename}")
                         buffer = ""
