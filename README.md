@@ -1,13 +1,13 @@
 # Print Service (PostScript over COM)
 
-Este proyecto permite exponer una API local para enviar datos en formato PostScript a una impresora conectada al puerto COM (como COM3 o COM4), desde una aplicación web (por ejemplo, Angular).
+Este proyecto permite exponer una API local para enviar datos en formato PostScript a una impresora conectada al puerto COM (como COM3), desde una aplicación web (por ejemplo, Angular).
 
 Incluye dos implementaciones:
 - **Node.js** (`print-service-node`)
 - **.NET 6 (WebAPI)** (`print-service-dotnet`)
 
 También incluye:
-- **Emulador de impresora en Python** (`postscript_com3_emulator_by_job.py`) para pruebas sin hardware real
+- **Emulador de impresora en Python** (`emulator/postscript_com3_emulator.py`) para pruebas sin hardware real
 - Scripts para instalación del servicio como servicio de Windows usando NSSM
 - Script Inno Setup para generar instalador `.exe`
 
@@ -16,9 +16,9 @@ También incluye:
 ## 📦 Estructura del Proyecto
 
 ```
-print-service-node/       --> Servicio local Node.js
-print-service-dotnet/     --> Servicio local .NET 6 WebAPI
-postscript_com4_emulator_by_job.py  --> Emulador de impresora en COM4
+print-service-node/                 --> Servicio local Node.js
+print-service-dotnet/              --> Servicio local .NET 6 WebAPI
+emulator/postscript_com3_emulator.py  --> Emulador de impresora en COM3
 ```
 
 ---
@@ -34,6 +34,12 @@ postscript_com4_emulator_by_job.py  --> Emulador de impresora en COM4
 - .NET 6 SDK
 - NSSM
 - (Opcional) Inno Setup para crear instalador `.exe`
+
+### Para pruebas sin impresora física
+- [com0com (crear puertos COM virtuales)](https://sourceforge.net/projects/com0com/)
+  - Instalar
+  - Crear par: `COM3 <-> COM4`
+  - Usar COM3 en el servicio y COM4 en el emulador, o viceversa
 
 ---
 
@@ -72,15 +78,23 @@ install_service.bat
 
 ## 🖨️ Emulador de Impresora (Python)
 
-Archivo: `postscript_com4_emulator_by_job.py`
+Archivo: `emulator/postscript_com3_emulator.py`
 
-Este script simula una impresora escuchando en el puerto COM4. Cada vez que recibe una impresión (detecta salto de línea o `\x0C`), guarda el contenido recibido en un archivo `.txt` dentro de la carpeta `impresiones`.
+Este script simula una impresora PostScript conectada a `COM3`. Cada vez que recibe un bloque de datos (detecta `\n` o `\x0C` como final), guarda el contenido en un archivo `.txt` dentro de una carpeta `impresiones`.
+
+### ¿Cómo funciona?
+- Abre el puerto `COM3`
+- Escucha continuamente por datos entrantes
+- Cuando detecta fin de trabajo, guarda el contenido recibido como:
+  ```
+  impresiones/impresion_YYYYMMDD_HHMMSS.txt
+  ```
 
 ### Uso:
 
 ```bash
 pip install pyserial
-python postscript_com4_emulator_by_job.py
+python emulator/postscript_com3_emulator.py
 ```
 
 ---
