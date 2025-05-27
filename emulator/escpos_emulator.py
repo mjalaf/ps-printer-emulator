@@ -7,6 +7,8 @@ import threading
 
 PORT = 'COM6'
 BAUDRATE = 9600
+OUTPUT_DIR = 'escpos_gui_output'
+
 COMMANDS = {
     b'\x1b\x40': '[RESET]',
     b'\x1b\x61\x00': '[LEFT]',
@@ -20,6 +22,14 @@ COMMANDS = {
     b'\x1d\x76': '[GRAPHIC IMAGE]',
     b'\x1d\x56': '[CUT PAPER]',
 }
+
+def ensure_output_dir():
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
+
+def generate_filename(suffix):
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    return os.path.join(OUTPUT_DIR, f"ticket_{timestamp}.{suffix}")
 
 def decode_ticket(data):
     output = []
@@ -50,6 +60,7 @@ class EscposGUI:
         self.text = ScrolledText(root, width=60, height=30, font=("Courier", 10))
         self.text.pack(padx=10, pady=10)
         self.text.insert(tk.END, "Listening on COM6...\n")
+        ensure_output_dir()
         self.start_listener()
 
     def start_listener(self):
@@ -64,10 +75,20 @@ class EscposGUI:
                     data = ser.read(1024)
                     if data:
                         buffer += data
-                        if b'\x1d\x56' in buffer:
+                        if b'\x1d\x56' in buffer:  # CUT PAPER
                             ticket = decode_ticket(buffer)
                             self.text.insert(tk.END, f"\n===== TICKET =====\n{ticket}\n===================\n")
                             self.text.see(tk.END)
+
+                            txt_filename = generate_filename("txt")
+                            bin_filename = generate_filename("bin")
+
+                            with open(txt_filename, "w", encoding="utf-8") as f:
+                                f.write(ticket)
+                            with open(bin_filename, "wb") as f:
+                                f.write(buffer)
+
+                            print(f"Ticket saved: {txt_filename}, {bin_filename}")
                             buffer = b""
         except serial.SerialException as e:
             self.text.insert(tk.END, f"\nError opening {PORT}: {e}\n")
